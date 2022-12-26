@@ -1,0 +1,49 @@
+version: '3.5'
+services:
+  nginx:
+    build:
+      context: docker/nginx
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/app
+    depends_on:
+      - php-fpm
+    ports:
+      - "8080:80"
+  php-fpm:
+    build:
+      context: docker/php-fpm
+      dockerfile: Dockerfile
+    environment:
+      XDEBUG_CONFIG: "remote_host=host.docker.internal remote_enable=1"
+      PHP_IDE_CONFIG: "serverName=docker-master"
+    volumes:
+      - ./:/app
+    depends_on:
+      - postgres
+  php-cli:
+    build:
+      context: docker/php-cli
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/app
+      - composer:/root/.composer/cache
+    tty: true
+    stdin_open: true
+  postgres:
+    build:
+      context: docker/postgress
+      dockerfile: Dockerfile
+    command: -c 'log_min_messages=debug5'
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: app
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres:
+  composer:
